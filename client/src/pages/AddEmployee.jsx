@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const AddEmployee = () => {
@@ -29,10 +30,9 @@ const AddEmployee = () => {
 
         const headers = { Authorization: `Bearer ${token}` };
 
-        // Fetch users and roles
         const [usersRes, rolesRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/auth/users', { headers }),
-          axios.get('http://localhost:5000/api/roles/list', { headers })
+          axios.get(`${API_BASE_URL}/api/auth/users`, { headers }),
+          axios.get(`${API_BASE_URL}/api/roles/list`, { headers })
         ]);
 
         if (usersRes.data.success) {
@@ -71,7 +71,7 @@ const AddEmployee = () => {
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/employee/create', formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/employee/create`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {

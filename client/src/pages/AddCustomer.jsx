@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const AddCustomer = () => {
@@ -24,7 +25,7 @@ const AddCustomer = () => {
         const headers = { Authorization: `Bearer ${token}` };
 
         // This endpoint fetches companies that are NOT customers (clients)
-        const res = await axios.get('http://localhost:5000/api/company/list', { headers });
+        const res = await axios.get(`${API_BASE_URL}/api/company/list`, { headers });
         if (res.data.success) {
           setClients(res.data.data);
         }
@@ -53,7 +54,7 @@ const AddCustomer = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/customer/create', formData, {
+      const res = await axios.post(`${API_BASE_URL}/api/customer/create`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {

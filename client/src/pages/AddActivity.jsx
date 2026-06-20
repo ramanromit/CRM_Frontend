@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const AddActivity = () => {
@@ -30,7 +31,7 @@ const AddActivity = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
-        const res = await axios.get('http://localhost:5000/api/company/all', {
+        const res = await axios.get(`${API_BASE_URL}/api/company/all`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) setCompanies(res.data.data);
@@ -156,7 +157,7 @@ const AddActivity = () => {
         submitData.append('attachment', formData.attachment);
       }
       
-      const res = await axios.post('http://localhost:5000/api/activity/create', submitData, {
+      const res = await axios.post(`${API_BASE_URL}/api/activity/create`, submitData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

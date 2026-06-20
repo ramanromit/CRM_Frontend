@@ -1,9 +1,29 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import OwnerDashboard from './OwnerDashboard';
+import StaffDashboard from './StaffDashboard';
+import AccountsDashboard from './AccountsDashboard';
 import './Auth.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Render Owner Dashboard for owner, developer, and manager roles
+  if (user && (user.role === 'owner' || user.role === 'developer' || user.role === 'manager')) {
+    return <OwnerDashboard />;
+  }
+
+  // Render Accounts Dashboard for accounts role
+  if (user && user.role === 'accounts') {
+    return <AccountsDashboard />;
+  }
+
+  // Render Staff Dashboard for other staff roles
+  if (user && ['sales', 'marketing', 'user'].includes(user.role)) {
+    return <StaffDashboard />;
+  }
 
   return (
     <div style={{ padding: '2rem', color: 'var(--text-main)' }}>
@@ -54,14 +74,7 @@ const Dashboard = () => {
           >
             + Register Activity
           </button>
-          <button 
-            onClick={() => navigate('/add-customer')} 
-            style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'background 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-sidebar)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
-          >
-            + Add Customer
-          </button>
+
           <button 
             onClick={() => navigate('/add-employee')} 
             style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', border: '1px solid var(--border-color)', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'background 0.2s' }}

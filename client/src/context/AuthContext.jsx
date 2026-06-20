@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 
 const AuthContext = createContext();
 
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
                 setLoading(false);
                 return;
             }
-            const res = await axios.get('http://localhost:5000/api/auth/me', {
+            const res = await axios.get(`${API_BASE_URL}/api/auth/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {

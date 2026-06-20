@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const AddOrder = () => {
-  const [customers, setCustomers] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -23,7 +24,7 @@ const AddOrder = () => {
   };
 
   const [formData, setFormData] = useState({
-    customer_id: '',
+    company_id: '',
     order_value: '',
     payment_done: '',
     financial_year: getCurrentFY(),
@@ -33,20 +34,20 @@ const AddOrder = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchCompanies = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) { navigate('/login'); return; }
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await axios.get('http://localhost:5000/api/customer/list', { headers });
-        if (res.data.success) setCustomers(res.data.data);
+        const res = await axios.get(`${API_BASE_URL}/api/company/all`, { headers });
+        if (res.data.success) setCompanies(res.data.data);
       } catch (err) {
-        setError(err.response?.data?.message || err.message || 'Failed to fetch customers');
+        setError(err.response?.data?.message || err.message || 'Failed to fetch companies');
       } finally {
         setLoading(false);
       }
     };
-    fetchCustomers();
+    fetchCompanies();
   }, [navigate]);
 
   const handleChange = (e) => {
@@ -61,7 +62,7 @@ const AddOrder = () => {
   const paymentDue = Math.max(0, Number(formData.order_value || 0) - Number(formData.payment_done || 0));
 
   const isFormValid = () => {
-    return formData.customer_id && Number(formData.order_value) > 0 && formData.financial_year.trim();
+    return formData.company_id && Number(formData.order_value) > 0 && formData.financial_year.trim();
   };
 
   const handleSubmit = async (e) => {
@@ -78,7 +79,7 @@ const AddOrder = () => {
     try {
       const token = localStorage.getItem('token');
       const submitData = new FormData();
-      submitData.append('customer_id', formData.customer_id);
+      submitData.append('company_id', formData.company_id);
       submitData.append('order_value', formData.order_value);
       submitData.append('payment_done', formData.payment_done || 0);
       submitData.append('financial_year', formData.financial_year);
@@ -86,7 +87,7 @@ const AddOrder = () => {
         submitData.append('attachment', formData.attachment);
       }
 
-      const res = await axios.post('http://localhost:5000/api/orders/create', submitData, {
+      const res = await axios.post(`${API_BASE_URL}/api/orders/create`, submitData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -94,7 +95,7 @@ const AddOrder = () => {
       });
       if (res.data.success) {
         setSuccess(`Order ${res.data.order.order_code} created successfully!`);
-        setFormData({ customer_id: '', order_value: '', payment_done: '', financial_year: getCurrentFY(), attachment: null });
+        setFormData({ company_id: '', order_value: '', payment_done: '', financial_year: getCurrentFY(), attachment: null });
         setTimeout(() => navigate('/orders'), 2000);
       }
     } catch (err) {
@@ -141,26 +142,26 @@ const AddOrder = () => {
         )}
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          {/* Customer Selection */}
+          {/* Customer / Client Selection */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Customer *</label>
+            <label style={labelStyle}>Company / Client / Customer *</label>
             {loading ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading customers...</p>
-            ) : customers.length === 0 ? (
-              <p style={{ color: '#ffcc00', fontSize: '14px' }}>No customers available. Convert a client first.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading companies...</p>
+            ) : companies.length === 0 ? (
+              <p style={{ color: '#ffcc00', fontSize: '14px' }}>No companies available. Please create a company first.</p>
             ) : (
               <select
-                name="customer_id"
+                name="company_id"
                 className="form-input"
                 style={{ width: '100%', boxSizing: 'border-box' }}
-                value={formData.customer_id}
+                value={formData.company_id}
                 onChange={handleChange}
                 required
               >
-                <option value="">-- Select a Customer --</option>
-                {customers.map(c => (
-                  <option key={c.customer_id} value={c.customer_id}>
-                    {c.company_name} ({c.customer_code})
+                <option value="">-- Select a Company --</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.client_type === 'customer' ? 'Customer' : 'Client'})
                   </option>
                 ))}
               </select>

@@ -15,9 +15,10 @@ const Sidebar = () => {
 
   const allNavLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: '⊞', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts', 'user'] },
-    { name: 'Activities', path: '/activities', icon: '📅', roles: ['developer', 'owner', 'manager', 'sales', 'marketing'] },
+    { name: 'Activities', path: '/activities', icon: '📅', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
+    { name: 'Quotations', path: '/quotations', icon: '📋', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
     { name: 'Customers', path: '/customers', icon: '👥', roles: ['developer', 'owner', 'manager', 'sales', 'accounts'] },
-    { name: 'Orders', path: '/orders', icon: '📦', roles: ['developer', 'owner', 'manager', 'sales', 'accounts'] },
+    { name: 'Orders', path: '/orders', icon: '📦', roles: ['developer', 'owner', 'manager', 'sales'] },
     { name: 'Companies', path: '/clients', icon: '🏢', roles: ['developer', 'owner', 'manager', 'sales', 'marketing'] },
     { name: 'Employees', path: '/employees', icon: '👤', roles: ['developer', 'owner', 'manager'] },
   ];

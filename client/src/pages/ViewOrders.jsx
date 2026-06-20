@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const ViewOrders = () => {
@@ -28,7 +29,7 @@ const ViewOrders = () => {
       const token = localStorage.getItem('token');
       if (!token) { navigate('/login'); return; }
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get('http://localhost:5000/api/orders/list', { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/orders/list`, { headers });
       if (res.data.success) setOrders(res.data.data);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to fetch orders');
@@ -72,7 +73,7 @@ const ViewOrders = () => {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.patch(
-        `http://localhost:5000/api/orders/update-payment/${paymentModal.order_id}`,
+        `${API_BASE_URL}/api/orders/update-payment/${paymentModal.order_id}`,
         { payment_done: newPaymentDone },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -314,7 +315,7 @@ const ViewOrders = () => {
                     </td>
                     <td style={tdStyle}>
                       {order.attachment ? (
-                        <a href={`http://localhost:5000${order.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={order.attachment.file_name}>
+                        <a href={`${API_BASE_URL}${order.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={order.attachment.file_name}>
                           📄 View
                         </a>
                       ) : (

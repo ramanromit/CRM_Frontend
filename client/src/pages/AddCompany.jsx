@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
@@ -34,7 +35,7 @@ const AddCompany = () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await axios.get('http://localhost:5000/api/employee/list', {
+        const res = await axios.get(`${API_BASE_URL}/api/employee/list`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
@@ -137,7 +138,7 @@ const AddCompany = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:5000/api/company/create',
+        `${API_BASE_URL}/api/company/create`,
         submitData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -377,9 +378,12 @@ const AddCompany = () => {
               <label style={labelStyle}>Assign To (Optional)</label>
               <select name="owner_id" className="form-input" value={formData.owner_id} onChange={handleChange} style={{ cursor: 'pointer', border: '1px solid var(--border-color)' }}>
                 <option value="" style={{ background: 'var(--bg-input)', color: '#999' }}>-- Assign to self --</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id} style={{ background: 'var(--bg-input)' }}>{emp.full_name || emp.email}</option>
-                ))}
+                {employees
+                  .filter(emp => role !== 'manager' || (emp.role !== 'manager' && emp.role !== 'owner' && emp.role !== 'developer'))
+                  .map(emp => (
+                    <option key={emp.id} value={emp.id} style={{ background: 'var(--bg-input)' }}>{emp.full_name || emp.email}</option>
+                  ))
+                }
               </select>
             </div>
           )}

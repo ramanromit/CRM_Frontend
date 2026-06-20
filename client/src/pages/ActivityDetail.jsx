@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const ActivityDetail = () => {
@@ -30,7 +31,7 @@ const ActivityDetail = () => {
       if (!token) { navigate('/login'); return; }
       const headers = { Authorization: `Bearer ${token}` };
 
-      const res = await axios.get(`http://localhost:5000/api/activity/company/${companyId}`, { headers });
+      const res = await axios.get(`${API_BASE_URL}/api/activity/company/${companyId}`, { headers });
       if (res.data.success) {
         setCompany(res.data.company);
         setActivities(res.data.data);
@@ -65,7 +66,7 @@ const ActivityDetail = () => {
     setHistory([]);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5000/api/activity/audit/${activity.id}`, {
+      const res = await axios.get(`${API_BASE_URL}/api/activity/audit/${activity.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
@@ -99,7 +100,7 @@ const ActivityDetail = () => {
     setEditSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`http://localhost:5000/api/activity/update/${editModal.id}`, editForm, {
+      const res = await axios.put(`${API_BASE_URL}/api/activity/update/${editModal.id}`, editForm, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const ViewEmployees = () => {
@@ -22,7 +23,7 @@ const ViewEmployees = () => {
         }
 
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await axios.get('http://localhost:5000/api/employee/list', { headers });
+        const res = await axios.get(`${API_BASE_URL}/api/employee/list`, { headers });
 
         if (res.data.success) {
           setEmployees(res.data.data);
@@ -58,7 +59,7 @@ const ViewEmployees = () => {
     setUpdating(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`http://localhost:5000/api/employee/update/${emp.id}`, editFormData, {
+      const res = await axios.put(`${API_BASE_URL}/api/employee/update/${emp.id}`, editFormData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {

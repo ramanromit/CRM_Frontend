@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
 
 const ViewCustomers = () => {
@@ -16,7 +17,7 @@ const ViewCustomers = () => {
         if (!token) { navigate('/login'); return; }
         const headers = { Authorization: `Bearer ${token}` };
 
-        const res = await axios.get('http://localhost:5000/api/customer/list', { headers });
+        const res = await axios.get(`${API_BASE_URL}/api/customer/list`, { headers });
         if (res.data.success) setCustomers(res.data.data);
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to fetch customers');
@@ -56,29 +57,6 @@ const ViewCustomers = () => {
             {customers.length} converted {customers.length === 1 ? 'customer' : 'customers'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate('/add-customer')}
-            style={{
-              background: 'var(--primary)',
-              border: 'none',
-              color: 'white',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--primary-hover)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--primary)'; e.currentTarget.style.transform = 'none'; }}
-          >
-            <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span> Add Customer
-          </button>
-        </div>
       </div>
 
       {/* Content */}
@@ -106,26 +84,8 @@ const ViewCustomers = () => {
           <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.6 }}>🏢</div>
           <h3 style={{ fontWeight: 500, marginBottom: '8px', fontSize: '20px' }}>No customers yet</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>
-            Convert a client to a customer to see them here.
+            Convert a client to a customer by creating their first order.
           </p>
-          <button
-            onClick={() => navigate('/add-customer')}
-            style={{
-              background: 'var(--primary)',
-              border: 'none',
-              color: 'white',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 500,
-              fontSize: '14px',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
-          >
-            + Add Customer
-          </button>
         </div>
       ) : (
         <div style={{

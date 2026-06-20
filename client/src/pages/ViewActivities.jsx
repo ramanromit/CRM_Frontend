@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import './Auth.css';
+import { useAuth } from '../context/AuthContext';
 
 const ViewActivities = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
   
   // Filters and Search
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState('all'); // 'all', '7days', '30days'
   const [filterType, setFilterType] = useState('all'); // 'all', 'client', 'customer'
+  const [viewMode, setViewMode] = useState('client'); // 'client', 'employee'
   
   const [sortField, setSortField] = useState('activity_date');
   const [sortDir, setSortDir] = useState('desc');
@@ -24,7 +28,7 @@ const ViewActivities = () => {
         if (!token) { navigate('/login'); return; }
         const headers = { Authorization: `Bearer ${token}` };
 
-        const actRes = await axios.get('http://localhost:5000/api/activity/list', { headers });
+        const actRes = await axios.get(`${API_BASE_URL}/api/activity/list`, { headers });
         if (actRes.data.success) setActivities(actRes.data.data);
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to fetch activities');
@@ -67,7 +71,8 @@ const ViewActivities = () => {
     filtered = filtered.filter(a => 
       (a.company_name || '').toLowerCase().includes(lowerQ) ||
       (a.query || '').toLowerCase().includes(lowerQ) ||
-      (a.description || '').toLowerCase().includes(lowerQ)
+      (a.description || '').toLowerCase().includes(lowerQ) ||
+      (a.owner_name || '').toLowerCase().includes(lowerQ)
     );
   }
 
@@ -88,28 +93,31 @@ const ViewActivities = () => {
     filtered = filtered.filter(a => new Date(a.activity_date) >= threshold);
   }
 
-  // Group by company, keeping the latest activity and counting total activities
-  const companyLatestMap = new Map();
-  const companyCountMap = new Map();
+  const isEmployeeView = viewMode === 'employee' && (user?.role === 'owner' || user?.role === 'manager');
+  const groupKey = isEmployeeView ? 'owner_id' : 'company_id';
+
+  const latestMap = new Map();
+  const countMap = new Map();
   
   filtered.forEach(a => {
-    // Count activities per company
-    companyCountMap.set(a.company_id, (companyCountMap.get(a.company_id) || 0) + 1);
+    const key = a[groupKey] || 'unknown';
+    // Count activities
+    countMap.set(key, (countMap.get(key) || 0) + 1);
 
     // Track latest activity
-    if (!companyLatestMap.has(a.company_id)) {
-      companyLatestMap.set(a.company_id, a);
+    if (!latestMap.has(key)) {
+      latestMap.set(key, a);
     } else {
-      const current = companyLatestMap.get(a.company_id);
+      const current = latestMap.get(key);
       if (new Date(a.activity_date) > new Date(current.activity_date)) {
-        companyLatestMap.set(a.company_id, a);
+        latestMap.set(key, a);
       }
     }
   });
   
-  const groupedFiltered = Array.from(companyLatestMap.values()).map(a => ({
+  const groupedFiltered = Array.from(latestMap.values()).map(a => ({
     ...a,
-    total_activities: companyCountMap.get(a.company_id) || 1
+    total_activities: countMap.get(a[groupKey] || 'unknown') || 1
   }));
 
   // Sort
@@ -233,13 +241,13 @@ const ViewActivities = () => {
       </div>
 
       {/* Control Bar */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
         
         {/* Search */}
         <div style={{ flex: '1 1 300px', position: 'relative' }}>
           <input 
             type="text" 
-            placeholder="Search by client or activity subject..." 
+            placeholder="Search by client, employee or activity subject..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -300,6 +308,46 @@ const ViewActivities = () => {
           </select>
         </div>
 
+        {/* View Mode Switch for Owner/Manager */}
+        {(user?.role === 'owner' || user?.role === 'manager') && (
+          <div style={{ flex: '0 1 auto', display: 'flex', background: 'var(--bg-input)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-color)' }}>
+            <button
+              onClick={() => setViewMode('client')}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '14px',
+                background: viewMode === 'client' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'client' ? 'var(--text-main)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'client' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              By Client
+            </button>
+            <button
+              onClick={() => setViewMode('employee')}
+              style={{
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '14px',
+                background: viewMode === 'employee' ? 'var(--bg-card)' : 'transparent',
+                color: viewMode === 'employee' ? 'var(--text-main)' : 'var(--text-muted)',
+                boxShadow: viewMode === 'employee' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              By Employee
+            </button>
+          </div>
+        )}
+
         {/* Clear Filters */}
         {(searchQuery || filterDate !== 'all' || filterType !== 'all') && (
           <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center' }}>
@@ -349,13 +397,26 @@ const ViewActivities = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr>
-                  <th style={thStyle} onClick={() => handleSort('company')}>COMPANY</th>
-                  <th style={thStyle} onClick={() => handleSort('client_type')}>TYPE</th>
-                  <th style={thStyle} onClick={() => handleSort('query')}>LATEST ACTIVITY</th>
-                  <th style={thStyle} onClick={() => handleSort('activity_date')}>DATE</th>
-                  <th style={{ ...thStyle, cursor: 'default' }}>ATTACHMENT</th>
-                  <th style={thStyle} onClick={() => handleSort('total_activities')}>TOTAL ACTS</th>
-                  <th style={thStyle} onClick={() => handleSort('owner_name')}>INTERACTED BY</th>
+                  {isEmployeeView ? (
+                    <>
+                      <th style={thStyle} onClick={() => handleSort('owner_name')}>EMPLOYEE</th>
+                      <th style={thStyle} onClick={() => handleSort('query')}>LATEST ACTIVITY</th>
+                      <th style={thStyle} onClick={() => handleSort('company')}>INTERACTED WITH</th>
+                      <th style={thStyle} onClick={() => handleSort('activity_date')}>DATE</th>
+                      <th style={{ ...thStyle, cursor: 'default' }}>ATTACHMENT</th>
+                      <th style={thStyle} onClick={() => handleSort('total_activities')}>TOTAL ACTS</th>
+                    </>
+                  ) : (
+                    <>
+                      <th style={thStyle} onClick={() => handleSort('company')}>COMPANY</th>
+                      <th style={thStyle} onClick={() => handleSort('client_type')}>TYPE</th>
+                      <th style={thStyle} onClick={() => handleSort('query')}>LATEST ACTIVITY</th>
+                      <th style={thStyle} onClick={() => handleSort('activity_date')}>DATE</th>
+                      <th style={{ ...thStyle, cursor: 'default' }}>ATTACHMENT</th>
+                      <th style={thStyle} onClick={() => handleSort('total_activities')}>TOTAL ACTS</th>
+                      <th style={thStyle} onClick={() => handleSort('owner_name')}>INTERACTED BY</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -371,71 +432,122 @@ const ViewActivities = () => {
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
                   >
-                    <td style={tdStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                          🏢
-                        </div>
-                        <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '15px' }}>{activity.company_name}</span>
-                      </div>
-                    </td>
-                    <td style={tdStyle}>
-                      {typeBadge(activity.client_type)}
-                    </td>
-                    <td style={tdStyle}>
-                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                        {activity.query}
-                      </span>
-                      {activity.description && (
-                        <div style={{
-                          fontSize: '12px',
-                          color: 'var(--text-muted)',
-                          marginTop: '4px',
-                          maxWidth: '250px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {activity.description}
-                        </div>
-                      )}
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>
-                      {formatDaysAgo(activity.activity_date)}
-                    </td>
-                    <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
-                      {activity.attachment ? (
-                        <a href={`http://localhost:5000${activity.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={activity.attachment.file_name}>
-                          📄 View
-                        </a>
-                      ) : (
-                        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
-                      )}
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ 
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: 'rgba(46,125,50,0.1)', color: 'var(--primary)',
-                        fontWeight: 700, borderRadius: '50%', width: '28px', height: '28px', fontSize: '12px'
-                      }}>
-                        {activity.total_activities}
-                      </div>
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '24px', height: '24px', borderRadius: '50%',
-                          backgroundColor: 'var(--text-muted)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '11px', fontWeight: 600, color: 'white'
-                        }}>
-                          {(activity.owner_name || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontWeight: 500, fontSize: '13px' }}>
-                          {activity.owner_name || 'Unknown'}
-                        </span>
-                      </div>
-                    </td>
+                    {isEmployeeView ? (
+                      <>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '32px', height: '32px', borderRadius: '50%',
+                              backgroundColor: 'var(--text-muted)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '14px', fontWeight: 600, color: 'white'
+                            }}>
+                              {(activity.owner_name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '15px' }}>
+                              {activity.owner_name || 'Unknown'}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{activity.query}</span>
+                          {activity.description && (
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {activity.description}
+                            </div>
+                          )}
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontWeight: 500, fontSize: '13px' }}>{activity.company_name}</span>
+                            {typeBadge(activity.client_type)}
+                          </div>
+                        </td>
+                        <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>{formatDaysAgo(activity.activity_date)}</td>
+                        <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
+                          {activity.attachment ? (
+                            <a href={`${API_BASE_URL}${activity.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={activity.attachment.file_name}>
+                              📄 View
+                            </a>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
+                          )}
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(46,125,50,0.1)', color: 'var(--primary)', fontWeight: 700, borderRadius: '50%', width: '28px', height: '28px', fontSize: '12px' }}>
+                            {activity.total_activities}
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+                              🏢
+                            </div>
+                            <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '15px' }}>{activity.company_name}</span>
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          {typeBadge(activity.client_type)}
+                        </td>
+                        <td style={tdStyle}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                            {activity.query}
+                          </span>
+                          {activity.description && (
+                            <div style={{
+                              fontSize: '12px',
+                              color: 'var(--text-muted)',
+                              marginTop: '4px',
+                              maxWidth: '250px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {activity.description}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>
+                          {formatDaysAgo(activity.activity_date)}
+                        </td>
+                        <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
+                          {activity.attachment ? (
+                            <a href={`${API_BASE_URL}${activity.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={activity.attachment.file_name}>
+                              📄 View
+                            </a>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
+                          )}
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ 
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            backgroundColor: 'rgba(46,125,50,0.1)', color: 'var(--primary)',
+                            fontWeight: 700, borderRadius: '50%', width: '28px', height: '28px', fontSize: '12px'
+                          }}>
+                            {activity.total_activities}
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '24px', height: '24px', borderRadius: '50%',
+                              backgroundColor: 'var(--text-muted)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '11px', fontWeight: 600, color: 'white'
+                            }}>
+                              {(activity.owner_name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{ fontWeight: 500, fontSize: '13px' }}>
+                              {activity.owner_name || 'Unknown'}
+                            </span>
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>

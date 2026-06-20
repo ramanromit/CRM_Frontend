@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../api';
 import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
@@ -40,7 +41,7 @@ const Clients = () => {
 
         const headers = { Authorization: `Bearer ${token}` };
 
-        const companiesRes = await axios.get('http://localhost:5000/api/company/list', { headers });
+        const companiesRes = await axios.get(`${API_BASE_URL}/api/company/list`, { headers });
 
         if (companiesRes.data.success) {
           setCompanies(companiesRes.data.data);
@@ -70,7 +71,7 @@ const Clients = () => {
     try {
       const token = localStorage.getItem('token');
       const payload = { ...company, priority: editPriorityValue };
-      const res = await axios.put(`http://localhost:5000/api/company/update/${company.id}`, payload, {
+      const res = await axios.put(`${API_BASE_URL}/api/company/update/${company.id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -91,7 +92,7 @@ const Clients = () => {
     setTransferError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/employee/list', {
+      const res = await axios.get(`${API_BASE_URL}/api/employee/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -115,7 +116,7 @@ const Clients = () => {
     setTransferError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`http://localhost:5000/api/company/transfer/${transferModal.id}`, {
+      const res = await axios.post(`${API_BASE_URL}/api/company/transfer/${transferModal.id}`, {
         new_owner_id: newOwnerId,
         reason: transferReason
       }, {
@@ -139,7 +140,7 @@ const Clients = () => {
     setHistoryData([]);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5000/api/company/${company.id}/assignment-history`, {
+      const res = await axios.get(`${API_BASE_URL}/api/company/${company.id}/assignment-history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -384,9 +385,12 @@ const Clients = () => {
                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)' }}
               >
                 <option value="">Select an employee</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.full_name || emp.email}</option>
-                ))}
+                {employees
+                  .filter(emp => role !== 'manager' || (emp.role !== 'manager' && emp.role !== 'owner' && emp.role !== 'developer'))
+                  .map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.full_name || emp.email}</option>
+                  ))
+                }
               </select>
             </div>
 
