@@ -103,17 +103,29 @@ const OwnerDashboard = () => {
 
       {/* Section 1: KPI Cards */}
       <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-title">Total Leads</div>
-          <div className="kpi-value">{summary?.total_leads ?? '—'}</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Total Customers</div>
-          <div className="kpi-value">{summary?.total_customers ?? '—'}</div>
-        </div>
+        {!isManager && (
+          <>
+            <div className="kpi-card">
+              <div className="kpi-title">Total Leads</div>
+              <div className="kpi-value">{summary?.total_leads ?? '—'}</div>
+            </div>
+            <div className="kpi-card">
+              <div className="kpi-title">Total Customers</div>
+              <div className="kpi-value">{summary?.total_customers ?? '—'}</div>
+            </div>
+          </>
+        )}
         <div className="kpi-card">
           <div className="kpi-title">Total Orders</div>
           <div className="kpi-value">{summary?.total_orders ?? '—'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Total Assigned Tasks</div>
+          <div className="kpi-value">{summary?.total_tasks ?? '—'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">Completed Tasks</div>
+          <div className="kpi-value" style={{ color: '#10b981' }}>{summary?.completed_tasks ?? '—'}</div>
         </div>
         {!isManager && (
           <>
@@ -130,7 +142,7 @@ const OwnerDashboard = () => {
       </div>
 
       {/* Section 3: Conversion Rate Card */}
-      {conversionRate && (
+      {!isManager && conversionRate && (
         <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
           <div className="kpi-card" style={{ gridColumn: 'span 1' }}>
             <div className="kpi-title">Conversion Rate</div>

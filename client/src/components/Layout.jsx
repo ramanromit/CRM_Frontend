@@ -4,6 +4,16 @@ import axios from 'axios';
 import API_BASE_URL from '../api';
 import Sidebar from './Sidebar';
 import { useAuth } from '../context/AuthContext';
+import { 
+  CalendarIcon, 
+  BellIcon, 
+  InboxIcon, 
+  SunIcon, 
+  DownloadIcon, 
+  FileIcon,
+  ClipboardIcon,
+  CheckCircleIcon
+} from './Icons';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
@@ -119,13 +129,12 @@ const Layout = ({ children }) => {
                 fetchCalendarEvents();
               }}
             >
-              <span 
-                style={{ fontSize: '20px', color: 'var(--text-muted)', transition: 'color 0.2s' }} 
+              <CalendarIcon 
+                size={20}
+                style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }} 
                 onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'} 
                 onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-              >
-                📅
-              </span>
+              />
             </div>
 
             <div 
@@ -133,7 +142,12 @@ const Layout = ({ children }) => {
               style={{ position: 'relative', cursor: 'pointer' }}
               onClick={() => setNotificationsOpen(!notificationsOpen)}
             >
-              <span style={{ fontSize: '20px', color: 'var(--text-muted)', transition: 'color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>🔔</span>
+              <BellIcon 
+                size={20}
+                style={{ color: 'var(--text-muted)', transition: 'color 0.2s' }} 
+                onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'} 
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'} 
+              />
 
               {notifications.length > 0 && (
                 <span style={{
@@ -183,25 +197,31 @@ const Layout = ({ children }) => {
                   </div>
                   
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '24px', marginBottom: '8px', opacity: 0.5 }}>📭</div>
+                    <div style={{ padding: '24px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <InboxIcon size={32} style={{ marginBottom: '8px', opacity: 0.5, color: 'var(--text-muted)' }} />
                       <div style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 500 }}>No new notifications</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>You're all caught up!</div>
                     </div>
                   ) : (
                     <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
                       {notifications.map(n => {
-                        let icon = '🔔';
+                        let icon = <BellIcon size={16} />;
                         let iconBg = 'rgba(79, 70, 229, 0.1)';
                         if (n.type === 'followup') {
-                          icon = '📅';
+                          icon = <CalendarIcon size={16} style={{ color: '#f59e0b' }} />;
                           iconBg = 'rgba(245, 158, 11, 0.1)';
                         } else if (n.type === 'quotation_request') {
-                          icon = '📥';
+                          icon = <DownloadIcon size={16} style={{ color: '#10b981' }} />;
                           iconBg = 'rgba(16, 185, 129, 0.1)';
                         } else if (n.type === 'quotation_update') {
-                          icon = '📄';
+                          icon = <FileIcon size={16} style={{ color: '#3b82f6' }} />;
                           iconBg = 'rgba(59, 130, 246, 0.1)';
+                        } else if (n.type === 'task') {
+                          icon = <ClipboardIcon size={16} style={{ color: '#8b5cf6' }} />;
+                          iconBg = 'rgba(139, 92, 246, 0.1)';
+                        } else if (n.type === 'task_completed') {
+                          icon = <CheckCircleIcon size={16} style={{ color: '#10b981' }} />;
+                          iconBg = 'rgba(16, 185, 129, 0.1)';
                         }
                         
                         return (
@@ -403,6 +423,7 @@ const Layout = ({ children }) => {
                       const hasFollowup = dayEvents.some(e => e.type === 'followup');
                       const hasExpiry = dayEvents.some(e => e.type === 'quotation_expiry');
                       const hasOrder = dayEvents.some(e => e.type === 'order');
+                      const hasTask = dayEvents.some(e => e.type === 'task');
 
                       cells.push(
                         <div 
@@ -437,6 +458,7 @@ const Layout = ({ children }) => {
                             {hasFollowup && <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></span>}
                             {hasExpiry && <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></span>}
                             {hasOrder && <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>}
+                            {hasTask && <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: '#8b5cf6' }}></span>}
                           </div>
                         </div>
                       );
@@ -457,7 +479,7 @@ const Layout = ({ children }) => {
                   if (filtered.length === 0) {
                     return (
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                        <span style={{ fontSize: '24px', marginBottom: '8px' }}>🏖️</span>
+                        <SunIcon size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
                         No events scheduled
                       </div>
                     );
@@ -474,6 +496,9 @@ const Layout = ({ children }) => {
                         } else if (ev.type === 'order') {
                           typeColor = '#10b981';
                           typeLabel = 'Order';
+                        } else if (ev.type === 'task') {
+                          typeColor = '#8b5cf6';
+                          typeLabel = 'Task Due';
                         }
 
                         return (

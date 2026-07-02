@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { CalendarIcon, QuotationIcon, ClockIcon, EditIcon, ScrollIcon } from '../components/Icons';
 import './Auth.css';
 
 const ActivityDetail = () => {
@@ -272,7 +273,9 @@ const ActivityDetail = () => {
         </div>
       ) : activities.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem' }}>
-          <div style={{ fontSize: '40px', marginBottom: '12px', opacity: 0.6 }}>📋</div>
+          <div style={{ marginBottom: '12px', opacity: 0.6, display: 'flex', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            <QuotationIcon size={40} />
+          </div>
           <h3 style={{ fontWeight: 500, marginBottom: '8px' }}>No activities recorded</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
             Register your first activity with this company.
@@ -335,7 +338,7 @@ const ActivityDetail = () => {
                     </span>
                   </div>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📅</span> {formatDate(activity.activity_date)}
+                    <CalendarIcon size={14} style={{ color: 'var(--text-muted)' }} /> {formatDate(activity.activity_date)}
                   </div>
                 </div>
 
@@ -384,12 +387,12 @@ const ActivityDetail = () => {
                         transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
+                        gap: '6px',
                       }}
                       onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-sidebar)'; e.currentTarget.style.color = 'var(--text-main)'; }}
                       onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-main)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                     >
-                      🕐 History
+                      <ClockIcon size={14} /> History
                     </button>
                     <button
                       onClick={() => openEdit(activity)}
@@ -405,12 +408,12 @@ const ActivityDetail = () => {
                         transition: 'all 0.2s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
+                        gap: '6px',
                       }}
                       onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(46,125,50,0.15)'; }}
                       onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(46,125,50,0.08)'; }}
                     >
-                      ✏️ Edit
+                      <EditIcon size={14} /> Edit
                     </button>
                   </div>
                 </div>
@@ -448,7 +451,9 @@ const ActivityDetail = () => {
               </div>
             ) : history.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                <div style={{ fontSize: '36px', marginBottom: '12px', opacity: 0.5 }}>📜</div>
+                <div style={{ marginBottom: '12px', opacity: 0.5, display: 'flex', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                  <ScrollIcon size={36} />
+                </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No edit history found.</p>
                 <p style={{ color: 'var(--text-muted)', fontSize: '12px', opacity: 0.7 }}>History is recorded when the activity is edited.</p>
               </div>
@@ -544,15 +549,60 @@ const ActivityDetail = () => {
                     <option value="Others">Others</option>
                   </select>
                 ) : (
-                  <input
-                    type="text"
+                  <select
                     className="form-input"
-                    value={editForm.query}
-                    onChange={(e) => setEditForm({ ...editForm, query: e.target.value })}
+                    value={
+                      [
+                        'New Requirement Received',
+                        'Repeat Order Expected',
+                        'Quotation Requested',
+                        'Quotation Sent',
+                        'Order Confirmed',
+                        'Payment Reminder',
+                        'Payment Received',
+                        'Outstanding Payment',
+                        'Complaint Registered',
+                        'Complaint Resolved'
+                      ].includes(editForm.query)
+                        ? editForm.query
+                        : 'Others'
+                    }
+                    onChange={(e) => {
+                      if (e.target.value !== 'Others') {
+                        setEditForm({ ...editForm, query: e.target.value });
+                      } else {
+                        setEditForm({ ...editForm, query: '' });
+                      }
+                    }}
                     required
-                  />
+                  >
+                    <option value="" disabled>-- Select Query --</option>
+                    <option value="New Requirement Received">New Requirement Received</option>
+                    <option value="Repeat Order Expected">Repeat Order Expected</option>
+                    <option value="Quotation Requested">Quotation Requested</option>
+                    <option value="Quotation Sent">Quotation Sent</option>
+                    <option value="Order Confirmed">Order Confirmed</option>
+                    <option value="Payment Reminder">Payment Reminder</option>
+                    <option value="Payment Received">Payment Received</option>
+                    <option value="Outstanding Payment">Outstanding Payment</option>
+                    <option value="Complaint Registered">Complaint Registered</option>
+                    <option value="Complaint Resolved">Complaint Resolved</option>
+                    <option value="Others">Others</option>
+                  </select>
                 )}
-                {company?.client_type === 'client' && !['Email Sent', 'Cold Call', 'Follow Up'].includes(editForm.query) && (
+                {((company?.client_type === 'client' && !['Email Sent', 'Cold Call', 'Follow Up'].includes(editForm.query)) ||
+                  (company?.client_type === 'customer' && ![
+                    'New Requirement Received',
+                    'Repeat Order Expected',
+                    'Quotation Requested',
+                    'Quotation Sent',
+                    'Order Confirmed',
+                    'Payment Reminder',
+                    'Payment Received',
+                    'Outstanding Payment',
+                    'Complaint Registered',
+                    'Complaint Resolved'
+                  ].includes(editForm.query))) && (
                   <input
                     type="text"
                     className="form-input"

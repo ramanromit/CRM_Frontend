@@ -48,7 +48,7 @@ const Login = () => {
       <div className="auth-form-content">
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-subtitle">
-          Don't have an account? <Link to="/signup" className="auth-link">Create an account</Link>
+          Please log in to access your account.
         </p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -80,14 +80,7 @@ const Login = () => {
             </button>
           </div>
           
-          <div className="form-options">
-            <label className="checkbox-wrapper">
-              <input type="checkbox" />
-              <span className="checkmark"></span>
-              <span className="checkbox-text">Remember me</span>
-            </label>
-            <a href="#" className="auth-link">Forgot password?</a>
-          </div>
+
 
           <button type="submit" className="submit-btn" disabled={loading}>
             {loading ? 'Logging in...' : 'Log in'}

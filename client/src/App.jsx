@@ -8,6 +8,8 @@ import AddActivity from './pages/AddActivity';
 import ViewActivities from './pages/ViewActivities';
 import ActivityDetail from './pages/ActivityDetail';
 import ViewCustomers from './pages/ViewCustomers';
+import ViewAssignments from './pages/ViewAssignments';
+import AddAssignment from './pages/AddAssignment';
 import AddEmployee from './pages/AddEmployee';
 import ViewEmployees from './pages/ViewEmployees';
 import ViewOrders from './pages/ViewOrders';
@@ -23,8 +25,8 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/signup" replace />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/" element={localStorage.getItem('token') ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+          <Route path="/signup" element={<Layout><Signup /></Layout>} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
           <Route path="/clients" element={<Layout><Clients /></Layout>} />
@@ -32,6 +34,8 @@ function App() {
           <Route path="/add-activity" element={<Layout><AddActivity /></Layout>} />
           <Route path="/activities" element={<Layout><ViewActivities /></Layout>} />
           <Route path="/activity/company/:companyId" element={<Layout><ActivityDetail /></Layout>} />
+          <Route path="/assignments" element={<Layout><ViewAssignments /></Layout>} />
+          <Route path="/add-assignment" element={<Layout><AddAssignment /></Layout>} />
           <Route path="/customers" element={<Layout><ViewCustomers /></Layout>} />
           <Route path="/add-employee" element={<Layout><AddEmployee /></Layout>} />
           <Route path="/employees" element={<Layout><ViewEmployees /></Layout>} />

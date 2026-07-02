@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { PackageIcon, FileIcon, CheckCircleIcon, HourglassIcon, SearchIcon, CreditCardIcon } from '../components/Icons';
+import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const ViewOrders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -171,19 +174,21 @@ const ViewOrders = () => {
             Manage and track all customer orders and payments.
           </p>
         </div>
-        <button
-          onClick={() => navigate('/add-order')}
-          style={{
-            background: 'var(--primary)', border: 'none', color: 'white', padding: '12px 20px',
-            borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px',
-            transition: 'background 0.3s ease', display: 'flex', alignItems: 'center', gap: '8px',
-            boxShadow: '0 4px 6px rgba(46, 125, 50, 0.2)'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
-        >
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>⊕</span> NEW ORDER
-        </button>
+        {user?.role !== 'user' && (
+          <button
+            onClick={() => navigate('/add-order')}
+            style={{
+              background: 'var(--primary)', border: 'none', color: 'white', padding: '12px 20px',
+              borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px',
+              transition: 'background 0.3s ease', display: 'flex', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 6px rgba(46, 125, 50, 0.2)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
+          >
+            <span style={{ fontSize: '18px', lineHeight: 1 }}>⊕</span> NEW ORDER
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -220,7 +225,7 @@ const ViewOrders = () => {
               color: 'var(--text-main)', fontSize: '14px', boxSizing: 'border-box'
             }}
           />
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, display: 'flex', alignItems: 'center' }}><SearchIcon size={16} /></span>
         </div>
         {financialYears.length > 0 && (
           <div style={{ flex: '0 1 auto' }}>
@@ -253,8 +258,8 @@ const ViewOrders = () => {
       ) : error ? (
         <div style={{ color: '#d32f2f', background: '#ffebee', padding: '16px 20px', borderRadius: '8px', fontSize: '14px' }}>⚠ {error}</div>
       ) : sorted.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📦</div>
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', backgroundColor: 'var(--bg-card)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <PackageIcon size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
           <h3 style={{ fontWeight: 500, marginBottom: '8px', fontSize: '18px' }}>No orders found</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
             {searchQuery || filterFY !== 'all' ? 'Try adjusting your filters.' : 'Create your first order to get started.'}
@@ -275,15 +280,15 @@ const ViewOrders = () => {
                   <th style={thStyle} onClick={() => handleSort('order_date')}>DATE</th>
                   <th style={thStyle} onClick={() => handleSort('owner_name')}>CREATED BY</th>
                   <th style={{ ...thStyle, cursor: 'default' }}>ATTACHMENT</th>
-                  <th style={{ ...thStyle, cursor: 'default' }}>ACTION</th>
+                  {user?.role !== 'marketing' && <th style={{ ...thStyle, cursor: 'default' }}>ACTION</th>}
                 </tr>
               </thead>
               <tbody>
                 {sorted.map((order) => (
                   <tr key={order.order_id}
-                    style={{ transition: 'background 0.2s', backgroundColor: 'var(--bg-card)' }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
+                    style={{ transition: 'background 0.2s' }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <td style={{ ...tdStyle, color: 'var(--primary)', fontWeight: 700, fontFamily: 'monospace', fontSize: '13px' }}>
                       {order.order_code}
@@ -316,31 +321,35 @@ const ViewOrders = () => {
                     <td style={tdStyle}>
                       {order.attachment ? (
                         <a href={`${API_BASE_URL}${order.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={order.attachment.file_name}>
-                          📄 View
+                          <FileIcon size={14} /> View
                         </a>
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
                       )}
                     </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => openPaymentModal(order)}
-                        title="Update Payment"
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: Number(order.payment_due) > 0 ? '#ef5350' : '#4caf50',
-                          cursor: 'pointer',
-                          fontSize: '20px',
-                          transition: 'transform 0.2s',
-                          padding: '4px',
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
-                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-                        💳
-                      </button>
-                    </td>
+                    {user?.role !== 'marketing' && (
+                      <td style={tdStyle}>
+                        <button
+                          onClick={() => openPaymentModal(order)}
+                          title="Update Payment"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: Number(order.payment_due) > 0 ? '#ef5350' : '#4caf50',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                          <CreditCardIcon size={18} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -425,7 +434,9 @@ const ViewOrders = () => {
                     {previewDue === 0 ? '✓ Fully Paid' : formatCurrency(previewDue)}
                   </div>
                 </div>
-                <div style={{ fontSize: '28px' }}>{previewDue === 0 ? '🎉' : '⏳'}</div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {previewDue === 0 ? <CheckCircleIcon size={28} style={{ color: '#4caf50' }} /> : <HourglassIcon size={28} style={{ color: '#ef5350' }} />}
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '10px' }}>

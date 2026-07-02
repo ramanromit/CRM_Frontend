@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { FileIcon, BuildingIcon, SearchIcon } from '../components/Icons';
 import './Auth.css';
 import { useAuth } from '../context/AuthContext';
 
@@ -261,7 +262,7 @@ const ViewActivities = () => {
               boxSizing: 'border-box'
             }}
           />
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, display: 'flex', alignItems: 'center' }}><SearchIcon size={16} /></span>
         </div>
 
         {/* Date Filter */}
@@ -427,10 +428,9 @@ const ViewActivities = () => {
                     style={{
                       transition: 'background 0.2s',
                       cursor: 'pointer',
-                      backgroundColor: 'var(--bg-card)',
                     }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-card)'}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     {isEmployeeView ? (
                       <>
@@ -467,7 +467,7 @@ const ViewActivities = () => {
                         <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
                           {activity.attachment ? (
                             <a href={`${API_BASE_URL}${activity.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={activity.attachment.file_name}>
-                              📄 View
+                              <FileIcon size={14} /> View
                             </a>
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>
@@ -483,8 +483,8 @@ const ViewActivities = () => {
                       <>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                              🏢
+                            <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--bg-sidebar)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)' }}>
+                              <BuildingIcon size={16} />
                             </div>
                             <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '15px' }}>{activity.company_name}</span>
                           </div>
@@ -516,7 +516,7 @@ const ViewActivities = () => {
                         <td style={tdStyle} onClick={(e) => e.stopPropagation()}>
                           {activity.attachment ? (
                             <a href={`${API_BASE_URL}${activity.attachment.file_url}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500 }} title={activity.attachment.file_name}>
-                              📄 View
+                              <FileIcon size={14} /> View
                             </a>
                           ) : (
                             <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>N/A</span>

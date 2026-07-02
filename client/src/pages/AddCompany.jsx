@@ -61,11 +61,11 @@ const AddCompany = () => {
         if (value.trim().length < 2) return 'Name must be at least 2 characters';
         return '';
       case 'email':
-        if (!value.trim()) return 'Email is required';
+        if (!value.trim()) return '';
         if (!emailRegex.test(value)) return 'Enter a valid email address';
         return '';
       case 'phone':
-        if (!value.trim()) return 'Phone is required';
+        if (!value.trim()) return '';
         if (!phoneRegex.test(value)) return 'Enter a valid phone (min 10 digits)';
         return '';
       case 'website':
@@ -102,14 +102,12 @@ const AddCompany = () => {
   };
 
   const isFormValid = () => {
-    return (
-      formData.name.trim().length >= 2 &&
-      emailRegex.test(formData.email) &&
-      phoneRegex.test(formData.phone) &&
-      formData.source !== '' &&
-      (formData.source !== 'Referals' || formData.referrerName !== '') &&
-      formData.size !== ''
-    );
+    const hasName = formData.name.trim().length >= 2;
+    const hasSource = formData.source !== '' && (formData.source !== 'Referral' || formData.referrerName !== '');
+    const hasSize = formData.size !== '';
+    const isEmailValid = formData.email.trim() === '' || emailRegex.test(formData.email);
+    const isPhoneValid = formData.phone.trim() === '' || phoneRegex.test(formData.phone);
+    return hasName && hasSource && hasSize && isEmailValid && isPhoneValid;
   };
 
   const handleSubmit = async (e) => {
@@ -129,8 +127,8 @@ const AddCompany = () => {
       const token = localStorage.getItem('token');
       
       const submitData = { ...formData };
-      if (submitData.source === 'Referals' && submitData.referrerName) {
-        submitData.source = `referal("${submitData.referrerName}")`;
+      if (submitData.source === 'Referral' && submitData.referrerName) {
+        submitData.source = `referral("${submitData.referrerName}")`;
       }
       delete submitData.referrerName;
       if (!canAssign) {
@@ -207,7 +205,7 @@ const AddCompany = () => {
               <div style={feedbackStyle('name')}>{getFieldError('name') || (getFieldStatus('name') === 'valid' ? 'Looks good!' : '')}</div>
             </div>
             <div style={inputWrapperStyle}>
-              <label style={labelStyle}>Email *</label>
+              <label style={labelStyle}>Email</label>
               {statusIcon('email')}
               <input type="text" name="email" className="form-input" style={{ border: getInputBorder('email') }} value={formData.email} onChange={handleChange} onBlur={handleBlur} />
               <div style={feedbackStyle('email')}>{getFieldError('email') || (getFieldStatus('email') === 'valid' ? 'Valid email ✓' : '')}</div>
@@ -217,7 +215,7 @@ const AddCompany = () => {
           {/* Row 2: Phone & Domain */}
           <div className="form-row">
             <div style={inputWrapperStyle}>
-              <label style={labelStyle}>Phone *</label>
+              <label style={labelStyle}>Phone</label>
               {statusIcon('phone')}
               <input type="text" name="phone" className="form-input" style={{ border: getInputBorder('phone') }} value={formData.phone} onChange={handleChange} onBlur={handleBlur} />
               <div style={feedbackStyle('phone')}>{getFieldError('phone') || (getFieldStatus('phone') === 'valid' ? 'Valid phone ✓' : '')}</div>
@@ -239,11 +237,12 @@ const AddCompany = () => {
               <label style={labelStyle}>Industry</label>
               <select name="industry" className="form-input" value={formData.industry} onChange={handleChange} style={{ cursor: 'pointer', border: '1px solid var(--border-color)' }}>
                 <option value="" disabled style={{ background: 'var(--bg-input)', color: '#999' }}>-- Select Industry --</option>
-                <option value="Technology" style={{ background: 'var(--bg-input)' }}>Technology</option>
-                <option value="Healthcare" style={{ background: 'var(--bg-input)' }}>Healthcare</option>
-                <option value="Finance" style={{ background: 'var(--bg-input)' }}>Finance</option>
-                <option value="Retail" style={{ background: 'var(--bg-input)' }}>Retail</option>
-                <option value="Manufacturing" style={{ background: 'var(--bg-input)' }}>Manufacturing</option>
+                <option value="Individual Farmers" style={{ background: 'var(--bg-input)' }}>Individual Farmers</option>
+                <option value="Farmer Producer Organizations (FPOs)" style={{ background: 'var(--bg-input)' }}>Farmer Producer Organizations (FPOs)</option>
+                <option value="Community-Based Organizations (CBOs)" style={{ background: 'var(--bg-input)' }}>Community-Based Organizations (CBOs)</option>
+                <option value="Institutional Clients" style={{ background: 'var(--bg-input)' }}>Institutional Clients</option>
+                <option value="Agri-Business Partners" style={{ background: 'var(--bg-input)' }}>Agri-Business Partners</option>
+                <option value="Educational/Research Institutes" style={{ background: 'var(--bg-input)' }}>Educational/Research Institutes</option>
                 <option value="Others" style={{ background: 'var(--bg-input)' }}>Others</option>
               </select>
             </div>
@@ -266,10 +265,14 @@ const AddCompany = () => {
               <label style={labelStyle}>Source *</label>
               <select name="source" className="form-input" value={formData.source} onChange={handleChange} onBlur={handleBlur} style={{ cursor: 'pointer', border: touched.source && !formData.source ? '1px solid #f44336' : formData.source ? '1px solid #4caf50' : '1px solid var(--border-color)' }}>
                 <option value="" disabled style={{ background: 'var(--bg-input)', color: '#999' }}>-- Select Source --</option>
-                <option value="Phone" style={{ background: 'var(--bg-input)' }}>Phone</option>
-                <option value="Email" style={{ background: 'var(--bg-input)' }}>Email</option>
-                <option value="Whatsapp" style={{ background: 'var(--bg-input)' }}>Whatsapp</option>
-                <option value="Referals" style={{ background: 'var(--bg-input)' }}>Referals</option>
+                <option value="Phone Outreach" style={{ background: 'var(--bg-input)' }}>Phone Outreach</option>
+                <option value="Website" style={{ background: 'var(--bg-input)' }}>Website</option>
+                <option value="Email Campaign" style={{ background: 'var(--bg-input)' }}>Email Campaign</option>
+                <option value="Advertisement" style={{ background: 'var(--bg-input)' }}>Advertisement</option>
+                <option value="Networking" style={{ background: 'var(--bg-input)' }}>Networking</option>
+                <option value="Social Media" style={{ background: 'var(--bg-input)' }}>Social Media</option>
+                <option value="Referral" style={{ background: 'var(--bg-input)' }}>Referral</option>
+                <option value="LinkedIn" style={{ background: 'var(--bg-input)' }}>LinkedIn</option>
                 <option value="Others" style={{ background: 'var(--bg-input)' }}>Others</option>
               </select>
               {touched.source && !formData.source && <div style={{ fontSize: '12px', marginTop: '6px', color: '#f44336' }}>Please select a source</div>}
@@ -282,7 +285,7 @@ const AddCompany = () => {
             </div>
           </div>
 
-          {formData.source === 'Referals' && (
+          {formData.source === 'Referral' && (
             <div className="form-row">
               <div style={inputWrapperStyle}>
                 <label style={labelStyle}>Referrer Name *</label>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const AddEmployee = () => {
@@ -18,8 +19,12 @@ const AddEmployee = () => {
   });
 
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
+    if (!user || (user.role !== 'owner' && user.role !== 'developer')) {
+      return;
+    }
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -89,6 +94,15 @@ const AddEmployee = () => {
 
   const inputWrapperStyle = { flex: 1, position: 'relative' };
   const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-muted)' };
+
+  if (!user || (user.role !== 'owner' && user.role !== 'developer')) {
+    return (
+      <div style={{ padding: '3rem', color: '#ff6b6b', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '10px' }}>Access Denied</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Only the Owner or Admin can assign employee details.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '3rem', color: 'var(--text-main)', maxWidth: '800px', margin: '0 auto', width: '100%' }}>

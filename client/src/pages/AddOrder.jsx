@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { HourglassIcon, CheckCircleIcon } from '../components/Icons';
 import './Auth.css';
 
 const AddOrder = () => {
@@ -226,9 +227,12 @@ const AddOrder = () => {
               width: '48px', height: '48px', borderRadius: '50%',
               backgroundColor: paymentDue > 0 ? 'rgba(239,83,80,0.1)' : 'rgba(76,175,80,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '20px',
             }}>
-              {paymentDue > 0 ? '⏳' : '✅'}
+              {paymentDue > 0 ? (
+                <HourglassIcon size={24} style={{ color: '#ef5350' }} />
+              ) : (
+                <CheckCircleIcon size={24} style={{ color: '#4caf50' }} />
+              )}
             </div>
           </div>
 

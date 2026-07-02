@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
+import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const AddActivity = () => {
@@ -25,6 +26,14 @@ const AddActivity = () => {
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const { user } = useAuth();
+
+  // Task assignment state (owner/manager only)
+  const isManager = user?.role === 'owner' || user?.role === 'manager' || user?.role === 'developer';
+  const [assignTask, setAssignTask] = useState(false);
+  const [assignMode, setAssignMode] = useState('self'); // 'self', 'owner', 'custom'
+  const [taskData, setTaskData] = useState({ assigned_to: '', task_title: '', task_priority: 'Medium', task_due_date: '' });
+  const [employeesList, setEmployeesList] = useState([]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -42,7 +51,32 @@ const AddActivity = () => {
       }
     };
     fetchCompanies();
+
+    // Fetch employees for task assignment (manager/owner only)
+    if (isManager) {
+      const fetchEmployees = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await axios.get(`${API_BASE_URL}/api/employee/list`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.data.success) setEmployeesList(res.data.data);
+        } catch (err) { /* silently fail */ }
+      };
+      fetchEmployees();
+    }
   }, [navigate]);
+
+  // Synchronize assigned_to when modes, selected company, or toggle changes
+  useEffect(() => {
+    if (assignTask) {
+      if (assignMode === 'self') {
+        setTaskData(prev => ({ ...prev, assigned_to: user?.id || '' }));
+      } else if (assignMode === 'owner' && selectedCompany) {
+        setTaskData(prev => ({ ...prev, assigned_to: selectedCompany.owner_id || '' }));
+      }
+    }
+  }, [assignTask, assignMode, selectedCompany, user]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -62,11 +96,18 @@ const AddActivity = () => {
   const handleCompanySelect = (company) => {
     if (selectedCompany?.id === company.id) {
       setSelectedCompany(null);
+      setAssignMode('self');
+      setTaskData(prev => ({ ...prev, assigned_to: user?.id || '' }));
     } else {
       setSelectedCompany(company);
       // Reset query when switching company types to prevent weird states
       setFormData(prev => ({ ...prev, query: '', customQuery: '' }));
       setTouched(prev => ({ ...prev, query: false, customQuery: false }));
+
+      // Automatically update assignment selection if client owner option is selected
+      if (assignMode === 'owner') {
+        setTaskData(prev => ({ ...prev, assigned_to: company.owner_id || '' }));
+      }
     }
     setDropdownOpen(false);
     setSearchTerm('');
@@ -90,7 +131,6 @@ const AddActivity = () => {
     switch (name) {
       case 'query':
         if (!value.trim()) return 'Query / subject is required';
-        if (selectedCompany?.client_type !== 'client' && value.trim().length < 3) return 'Must be at least 3 characters';
         return '';
       case 'customQuery':
         if (formData.query === 'Others' && !value.trim()) return 'Please specify the custom query';
@@ -119,11 +159,12 @@ const AddActivity = () => {
   };
 
   const isFormValid = () => {
-    const isQueryValid = selectedCompany?.client_type === 'client' 
-      ? (formData.query !== '' && (formData.query !== 'Others' || formData.customQuery.trim().length >= 3))
-      : formData.query.trim().length >= 3;
-
-    return selectedCompany && isQueryValid;
+    if (!selectedCompany) return false;
+    if (formData.query === '') return false;
+    if (formData.query === 'Others') {
+      return formData.customQuery.trim().length >= 3;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -156,6 +197,15 @@ const AddActivity = () => {
       if (formData.attachment) {
         submitData.append('attachment', formData.attachment);
       }
+
+      // Append task assignment fields if enabled
+      if (assignTask && taskData.assigned_to) {
+        submitData.append('assign_task', 'true');
+        submitData.append('assigned_to', taskData.assigned_to);
+        submitData.append('task_title', taskData.task_title || finalQuery);
+        submitData.append('task_priority', taskData.task_priority);
+        submitData.append('task_due_date', taskData.task_due_date || '');
+      }
       
       const res = await axios.post(`${API_BASE_URL}/api/activity/create`, submitData, {
         headers: { 
@@ -165,11 +215,14 @@ const AddActivity = () => {
       });
 
       if (res.data.success) {
-        setSuccess('Activity registered successfully!');
+        const msg = res.data.task ? 'Activity registered & task assigned!' : 'Activity registered successfully!';
+        setSuccess(msg);
         setFormData({ query: '', customQuery: '', description: '', rep_name: '', status_tag: '', next_followup_date: '', attachment: null });
         setSelectedCompany(null);
         setTouched({});
-        setTimeout(() => navigate('/activities'), 2000);
+        setAssignTask(false);
+        setTaskData({ assigned_to: '', task_title: '', task_priority: 'Medium', task_due_date: '' });
+        setTimeout(() => navigate(res.data.task ? '/assignments' : '/activities'), 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Something went wrong');
@@ -350,7 +403,15 @@ const AddActivity = () => {
             <div style={inputWrapperStyle}>
               <label style={labelStyle}>Query / Subject *</label>
               
-              {selectedCompany?.client_type === 'client' ? (
+              {!selectedCompany ? (
+                <select
+                  className="form-input"
+                  disabled
+                  value=""
+                >
+                  <option value="">-- Select Company First --</option>
+                </select>
+              ) : selectedCompany.client_type === 'client' ? (
                 <>
                   <select
                     id="activity-query-dropdown"
@@ -361,7 +422,7 @@ const AddActivity = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                   >
-                    <option value="">-- Select Status Tag --</option>
+                    <option value="">-- Select Query --</option>
                     <option value="Email Sent">Email Sent</option>
                     <option value="Cold Call">Cold Call</option>
                     <option value="Follow Up">Follow Up</option>
@@ -390,19 +451,48 @@ const AddActivity = () => {
                 </>
               ) : (
                 <>
-                  {statusIcon('query')}
-                  <input
-                    id="activity-query"
-                    type="text"
+                  <select
+                    id="activity-query-dropdown"
                     name="query"
                     className="form-input"
-                    placeholder="e.g. Follow-up on proposal"
-                    style={{ border: getInputBorder('query') }}
+                    style={{ border: getInputBorder('query'), width: '100%', boxSizing: 'border-box' }}
                     value={formData.query}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                  />
-                  <div style={feedbackStyle('query')}>{getFieldError('query') || (getFieldStatus('query') === 'valid' ? 'Looks good!' : '')}</div>
+                  >
+                    <option value="">-- Select Query --</option>
+                    <option value="New Requirement Received">New Requirement Received</option>
+                    <option value="Repeat Order Expected">Repeat Order Expected</option>
+                    <option value="Quotation Requested">Quotation Requested</option>
+                    <option value="Quotation Sent">Quotation Sent</option>
+                    <option value="Order Confirmed">Order Confirmed</option>
+                    <option value="Payment Reminder">Payment Reminder</option>
+                    <option value="Payment Received">Payment Received</option>
+                    <option value="Outstanding Payment">Outstanding Payment</option>
+                    <option value="Complaint Registered">Complaint Registered</option>
+                    <option value="Complaint Resolved">Complaint Resolved</option>
+                    <option value="Others">Others</option>
+                  </select>
+                  <div style={feedbackStyle('query')}>{getFieldError('query')}</div>
+
+                  {formData.query === 'Others' && (
+                    <div style={{ marginTop: '12px' }}>
+                      <label style={labelStyle}>Custom Query *</label>
+                      {statusIcon('customQuery')}
+                      <input
+                        type="text"
+                        name="customQuery"
+                        className="form-input"
+                        placeholder="Specify custom activity..."
+                        style={{ border: getInputBorder('customQuery') }}
+                        value={formData.customQuery}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        autoFocus
+                      />
+                      <div style={feedbackStyle('customQuery')}>{getFieldError('customQuery')}</div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -486,6 +576,199 @@ const AddActivity = () => {
             </div>
           </div>
 
+          {/* Task Assignment Section (Owner/Manager only) */}
+          {isManager && selectedCompany && (
+            <div style={{
+              marginTop: '24px',
+              padding: '20px',
+              borderRadius: '10px',
+              border: assignTask ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+              backgroundColor: assignTask ? 'rgba(92, 184, 92, 0.06)' : 'var(--bg-sidebar)',
+              transition: 'all 0.3s ease'
+            }}>
+              {/* Toggle Header */}
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                onClick={() => setAssignTask(!assignTask)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '8px',
+                    background: assignTask ? 'var(--primary)' : 'var(--bg-input)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={assignTask ? 'white' : 'var(--text-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      <path d="M9 14l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Assign Task</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Create a task for an employee from this activity</div>
+                  </div>
+                </div>
+                {/* Toggle Switch */}
+                <div style={{
+                  width: '44px', height: '24px', borderRadius: '12px',
+                  backgroundColor: assignTask ? 'var(--primary)' : 'var(--bg-input)',
+                  border: `1px solid ${assignTask ? 'var(--primary)' : 'var(--border-color)'}`,
+                  position: 'relative', cursor: 'pointer', transition: 'all 0.3s ease',
+                  flexShrink: 0
+                }}>
+                  <div style={{
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    backgroundColor: 'white',
+                    position: 'absolute', top: '2px',
+                    left: assignTask ? '22px' : '2px',
+                    transition: 'left 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                  }} />
+                </div>
+              </div>
+
+              {/* Task Fields (collapsible) */}
+              {assignTask && (
+                <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px', animation: 'fadeSlideIn 0.3s ease' }}>
+                  {/* Assign To */}
+                  <div>
+                    <label style={labelStyle}>Assign To *</label>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssignMode('self');
+                          setTaskData({ ...taskData, assigned_to: user?.id || '' });
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          border: assignMode === 'self' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                          backgroundColor: assignMode === 'self' ? 'rgba(92, 184, 92, 0.15)' : 'var(--bg-input)',
+                          color: 'var(--text-main)',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        👤 Delegate to Myself
+                      </button>
+
+                      {selectedCompany?.owner_id && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAssignMode('owner');
+                            setTaskData({ ...taskData, assigned_to: selectedCompany.owner_id });
+                          }}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: assignMode === 'owner' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                            backgroundColor: assignMode === 'owner' ? 'rgba(92, 184, 92, 0.15)' : 'var(--bg-input)',
+                            color: 'var(--text-main)',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          💼 Client Owner ({selectedCompany.owner_name})
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAssignMode('custom');
+                          setTaskData({ ...taskData, assigned_to: '' });
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          border: assignMode === 'custom' ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                          backgroundColor: assignMode === 'custom' ? 'rgba(92, 184, 92, 0.15)' : 'var(--bg-input)',
+                          color: 'var(--text-main)',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        👥 Select another employee
+                      </button>
+                    </div>
+
+                    {assignMode === 'custom' && (
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', boxSizing: 'border-box', animation: 'fadeSlideIn 0.2s ease' }}
+                        value={taskData.assigned_to}
+                        onChange={(e) => setTaskData({ ...taskData, assigned_to: e.target.value })}
+                      >
+                        <option value="">-- Select Employee --</option>
+                        {employeesList.map(emp => (
+                          <option key={emp.id} value={emp.id}>{emp.full_name} ({emp.role})</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Task Title + Priority */}
+                  <div className="form-row" style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ flex: 2 }}>
+                      <label style={labelStyle}>Task Title</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Auto-filled from activity query..."
+                        style={{ width: '100%', boxSizing: 'border-box' }}
+                        value={taskData.task_title}
+                        onChange={(e) => setTaskData({ ...taskData, task_title: e.target.value })}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>Priority</label>
+                      <select
+                        className="form-input"
+                        style={{ width: '100%', boxSizing: 'border-box' }}
+                        value={taskData.task_priority}
+                        onChange={(e) => setTaskData({ ...taskData, task_priority: e.target.value })}
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Due Date */}
+                  <div>
+                    <label style={labelStyle}>Task Due Date</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                      value={taskData.task_due_date}
+                      onChange={(e) => setTaskData({ ...taskData, task_due_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Submit */}
           <button
             id="submit-activity"
@@ -498,7 +781,7 @@ const AddActivity = () => {
               cursor: isFormValid() ? 'pointer' : 'not-allowed',
             }}
           >
-            {loading ? 'Registering...' : 'Register Activity'}
+            {loading ? 'Registering...' : (assignTask && taskData.assigned_to ? 'Register Activity & Assign Task' : 'Register Activity')}
           </button>
         </form>
       </div>

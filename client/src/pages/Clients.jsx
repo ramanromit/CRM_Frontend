@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
 import { useAuth } from '../context/AuthContext';
+import { EditIcon, RefreshIcon, ClockIcon, PhoneIcon, MailIcon } from '../components/Icons';
 import './Auth.css';
 
 const Clients = () => {
@@ -22,6 +23,7 @@ const Clients = () => {
   const [newOwnerId, setNewOwnerId] = useState('');
   const [transferReason, setTransferReason] = useState('');
   const [transferring, setTransferring] = useState(false);
+  const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(null);
   const [transferError, setTransferError] = useState('');
 
   const [historyModal, setHistoryModal] = useState(null);
@@ -153,8 +155,21 @@ const Clients = () => {
     }
   };
 
+  const thStyle = {
+    padding: '16px',
+    whiteSpace: 'nowrap',
+    fontWeight: 600,
+    fontSize: '14px',
+    color: 'var(--text-muted)'
+  };
+
+  const tdStyle = {
+    padding: '16px',
+    fontSize: '14px'
+  };
+
   return (
-    <div style={{ padding: '3rem', color: 'var(--text-main)', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+    <div style={{ padding: '1.5rem', color: 'var(--text-main)', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ margin: 0, fontWeight: 600, fontSize: '28px' }}>Companies</h1>
       </div>
@@ -169,16 +184,16 @@ const Clients = () => {
             <p style={{ color: 'var(--text-muted)' }}>No companies found.</p>
           ) : (
             <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)' }}>
-                    <th style={{ padding: '16px' }}>Company Name</th>
-                    <th style={{ padding: '16px' }}>Domain</th>
-                    <th style={{ padding: '16px' }}>Current Owner</th>
-                    <th style={{ padding: '16px' }}>Phone</th>
-                    <th style={{ padding: '16px' }}>Email</th>
-                    <th style={{ padding: '16px' }}>Industry</th>
-                    <th style={{ padding: '16px' }}>Priority</th>
+                    <th style={thStyle}>Company Name</th>
+                    <th style={thStyle}>Domain</th>
+                    <th style={thStyle}>Current Owner</th>
+                    <th style={thStyle}>Phone</th>
+                    <th style={thStyle}>Email</th>
+                    <th style={thStyle}>Priority</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -187,171 +202,308 @@ const Clients = () => {
                     const priorityBg = company.priority === 'high' ? 'rgba(244,67,54,0.12)' : company.priority === 'medium' ? 'rgba(255,235,59,0.12)' : 'rgba(76,175,80,0.12)';
                     
                     return (
-                      <tr key={company.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '16px' }}>{company.name}</td>
-                        <td style={{ padding: '16px' }}>{company.domain}</td>
-                        <td style={{ padding: '16px', fontWeight: 500, color: 'var(--primary)' }}>{company.Owner?.full_name || company.Owner?.email || 'Unknown'}</td>
-                        <td style={{ padding: '16px' }}>
-                          {company.phone ? (
-                            <a href={`tel:${company.phone}`} style={{ color: 'var(--text-main)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
-                              onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                              onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                            >
-                              📞 {company.phone}
-                            </a>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '16px' }}>
-                          {company.email ? (
-                            <a href={`mailto:${company.email}`} style={{ color: 'var(--text-main)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
-                              onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                              onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                            >
-                              ✉ {company.email}
-                            </a>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '16px', textTransform: 'capitalize' }}>{company.industry}</td>
-                        <td style={{ padding: '16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '4px 10px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              backgroundColor: priorityBg,
-                              color: priorityColor,
-                              textTransform: 'capitalize'
-                            }}>
-                              {company.priority || 'Low'}
-                            </span>
-                            <span 
-                              onClick={() => handleEditClick(company)}
-                              title="Edit Priority"
-                              style={{ cursor: 'pointer', fontSize: '14px', opacity: 0.5, transition: 'opacity 0.2s' }}
-                              onMouseOver={(e) => e.currentTarget.style.opacity = 1}
-                              onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
-                            >
-                              ✏️
-                            </span>
-                            {canTransfer && (
+                      <React.Fragment key={company.id}>
+                        <tr 
+                          onClick={() => setSelectedCompanyDetails(company)}
+                          style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.2s', cursor: 'pointer' }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={tdStyle}>{company.name}</td>
+                          <td style={tdStyle}>{company.domain}</td>
+                          <td style={{ ...tdStyle, fontWeight: 500, color: 'var(--primary)' }}>{company.Owner?.full_name || company.Owner?.email || 'Unknown'}</td>
+                          <td style={tdStyle}>
+                            {company.phone ? (
+                              <a href={`tel:${company.phone}`} onClick={(e) => e.stopPropagation()} style={{ color: 'var(--text-main)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
+                                onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                              >
+                                <PhoneIcon size={14} style={{ color: 'var(--text-muted)' }} /> {company.phone}
+                              </a>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
+                            )}
+                          </td>
+                          <td style={tdStyle}>
+                            {company.email ? (
+                              <a href={`mailto:${company.email}`} onClick={(e) => e.stopPropagation()} style={{ color: 'var(--text-main)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
+                                onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                              >
+                                <MailIcon size={14} style={{ color: 'var(--text-muted)' }} /> {company.email}
+                              </a>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>—</span>
+                            )}
+                          </td>
+                          <td style={tdStyle}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{
+                                display: 'inline-block',
+                                padding: '4px 10px',
+                                borderRadius: '12px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                backgroundColor: priorityBg,
+                                color: priorityColor,
+                                textTransform: 'capitalize'
+                              }}>
+                                {company.priority || 'Low'}
+                              </span>
                               <span 
-                                onClick={() => handleTransferClick(company)}
-                                title="Transfer Company"
-                                style={{ cursor: 'pointer', fontSize: '14px', opacity: 0.5, transition: 'opacity 0.2s', marginLeft: '4px' }}
+                                onClick={(e) => { e.stopPropagation(); handleEditClick(company); }}
+                                title="Edit Priority"
+                                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', opacity: 0.5, transition: 'opacity 0.2s' }}
                                 onMouseOver={(e) => e.currentTarget.style.opacity = 1}
                                 onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
                               >
-                                🔄
+                                <EditIcon size={14} />
                               </span>
-                            )}
-                            <span 
-                              onClick={() => handleHistoryClick(company)}
-                              title="Assignment History"
-                              style={{ cursor: 'pointer', fontSize: '14px', opacity: 0.5, transition: 'opacity 0.2s', marginLeft: '4px' }}
-                              onMouseOver={(e) => e.currentTarget.style.opacity = 1}
-                              onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
-                            >
-                              🕒
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
+                              {canTransfer && (
+                                <span 
+                                  onClick={(e) => { e.stopPropagation(); handleTransferClick(company); }}
+                                  title="Transfer Company"
+                                  style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', opacity: 0.5, transition: 'opacity 0.2s', marginLeft: '6px' }}
+                                  onMouseOver={(e) => e.currentTarget.style.opacity = 1}
+                                  onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
+                                >
+                                  <RefreshIcon size={14} />
+                                </span>
+                              )}
+                              <span 
+                                onClick={(e) => { e.stopPropagation(); handleHistoryClick(company); }}
+                                title="Assignment History"
+                                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', opacity: 0.5, transition: 'opacity 0.2s', marginLeft: '6px' }}
+                                onMouseOver={(e) => e.currentTarget.style.opacity = 1}
+                                onMouseOut={(e) => e.currentTarget.style.opacity = 0.5}
+                              >
+                                <ClockIcon size={14} />
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                        {editingCompanyId === company.id && (
+                          <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td colSpan={6} onClick={(e) => e.stopPropagation()} style={{ padding: '20px 24px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                              <div style={{
+                                backgroundColor: 'var(--bg-card)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '12px',
+                                padding: '20px 24px',
+                                boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
+                                animation: 'fadeSlideIn 0.25s ease',
+                              }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                  <h3 style={{ margin: 0, fontWeight: 500, fontSize: '16px' }}>
+                                    Edit Priority — <span style={{ color: 'var(--primary)' }}>{company.name}</span>
+                                  </h3>
+                                  <span 
+                                    onClick={handleCancelEdit}
+                                    style={{ cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)', transition: 'color 0.2s' }}
+                                    onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                                    onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                                  >✕</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                  {['low', 'medium', 'high'].map(level => {
+                                    const color = level === 'high' ? '#f44336' : level === 'medium' ? '#ffeb3b' : '#4caf50';
+                                    const isActive = editPriorityValue === level;
+                                    return (
+                                      <button
+                                        key={level}
+                                        type="button"
+                                        onClick={() => setEditPriorityValue(level)}
+                                        style={{
+                                          flex: 1,
+                                          padding: '10px',
+                                          borderRadius: '8px',
+                                          border: `2px solid ${isActive ? color : 'var(--border-color)'}`,
+                                          backgroundColor: isActive ? `${color}22` : 'var(--bg-input)',
+                                          color: isActive ? color : 'var(--text-main)',
+                                          cursor: 'pointer',
+                                          fontWeight: 600,
+                                          fontSize: '13px',
+                                          textTransform: 'capitalize',
+                                          transition: 'all 0.2s ease',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px',
+                                        }}
+                                      >
+                                        <span style={{
+                                          width: '8px', height: '8px', borderRadius: '50%',
+                                          backgroundColor: isActive ? color : 'var(--border-color)',
+                                          border: `2px solid ${color}`,
+                                          display: 'inline-block',
+                                        }} />
+                                        {level}
+                                      </button>
+                                    );
+                                  })}
+                                  <button
+                                    onClick={() => handleSavePriority(company)}
+                                    disabled={updating}
+                                    style={{
+                                      background: 'var(--primary)',
+                                      color: 'white',
+                                      border: 'none',
+                                      padding: '10px 20px',
+                                      borderRadius: '8px',
+                                      cursor: updating ? 'not-allowed' : 'pointer',
+                                      fontWeight: 600,
+                                      fontSize: '13px',
+                                      transition: 'background 0.2s',
+                                    }}
+                                  >
+                                    {updating ? 'Saving...' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
               </table>
             </div>
+          </div>
           )}
 
-          {/* Floating edit panel */}
-          {editingCompanyId && (() => {
-            const company = companies.find(c => c.id === editingCompanyId);
-            if (!company) return null;
-            return (
-              <div style={{
-                marginTop: '1.5rem',
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '12px',
-                padding: '20px 24px',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
-                animation: 'fadeSlideIn 0.25s ease',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ margin: 0, fontWeight: 500, fontSize: '16px' }}>
-                    Edit Priority — <span style={{ color: 'var(--primary)' }}>{company.name}</span>
-                  </h3>
-                  <span 
-                    onClick={handleCancelEdit}
-                    style={{ cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)', transition: 'color 0.2s' }}
-                    onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
-                    onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  >✕</span>
+
+        </div>
+      )}
+
+      {/* Company Details Modal */}
+      {selectedCompanyDetails && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, backdropFilter: 'blur(4px)', animation: 'fadeIn 0.2s ease'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '16px',
+            width: '90%', maxWidth: '600px', maxHeight: '90vh', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)', border: '1px solid var(--border-color)',
+            color: 'var(--text-main)', overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+              <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 600 }}>Company Profile</h2>
+              <span 
+                onClick={() => setSelectedCompanyDetails(null)} 
+                style={{ cursor: 'pointer', fontSize: '24px', color: 'var(--text-muted)', transition: 'color 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'}
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+              >✕</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* Company Header Card */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', backgroundColor: 'var(--bg-input)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
+                  {selectedCompanyDetails.name.substring(0, 2).toUpperCase()}
                 </div>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  {['low', 'medium', 'high'].map(level => {
-                    const color = level === 'high' ? '#f44336' : level === 'medium' ? '#ffeb3b' : '#4caf50';
-                    const isActive = editPriorityValue === level;
-                    return (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => setEditPriorityValue(level)}
-                        style={{
-                          flex: 1,
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: `2px solid ${isActive ? color : 'var(--border-color)'}`,
-                          backgroundColor: isActive ? `${color}22` : 'var(--bg-input)',
-                          color: isActive ? color : 'var(--text-main)',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontSize: '13px',
-                          textTransform: 'capitalize',
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                        }}
-                      >
-                        <span style={{
-                          width: '8px', height: '8px', borderRadius: '50%',
-                          backgroundColor: isActive ? color : 'var(--border-color)',
-                          border: `2px solid ${color}`,
-                          display: 'inline-block',
-                        }} />
-                        {level}
-                      </button>
-                    );
-                  })}
-                  <button
-                    onClick={() => handleSavePriority(company)}
-                    disabled={updating}
-                    style={{
-                      background: 'var(--primary)',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                      cursor: updating ? 'not-allowed' : 'pointer',
-                      fontWeight: 600,
-                      fontSize: '13px',
-                      transition: 'background 0.2s',
-                    }}
-                  >
-                    {updating ? 'Saving...' : 'Save'}
-                  </button>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>{selectedCompanyDetails.name}</h3>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--border-color)', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                      {selectedCompanyDetails.domain || 'N/A'}
+                    </span>
+                    <span style={{
+                      fontSize: '11px', padding: '2px 8px', borderRadius: '4px',
+                      backgroundColor: selectedCompanyDetails.priority === 'high' ? 'rgba(244,67,54,0.15)' : selectedCompanyDetails.priority === 'medium' ? 'rgba(255,235,59,0.15)' : 'rgba(76,175,80,0.15)',
+                      color: selectedCompanyDetails.priority === 'high' ? '#f44336' : selectedCompanyDetails.priority === 'medium' ? '#ffd54f' : '#8ed694',
+                      textTransform: 'capitalize', fontWeight: 600
+                    }}>
+                      {selectedCompanyDetails.priority || 'low'} Priority
+                    </span>
+                  </div>
                 </div>
               </div>
-            );
-          })()}
+
+              {/* Grid of Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Industry</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{selectedCompanyDetails.industry || '—'}</div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Company Size</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{selectedCompanyDetails.size || '—'}</div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Phone</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                    {selectedCompanyDetails.phone ? (
+                      <a href={`tel:${selectedCompanyDetails.phone}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+                        {selectedCompanyDetails.phone}
+                      </a>
+                    ) : '—'}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Email</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                    {selectedCompanyDetails.email ? (
+                      <a href={`mailto:${selectedCompanyDetails.email}`} style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+                        {selectedCompanyDetails.email}
+                      </a>
+                    ) : '—'}
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Lead Source</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>{selectedCompanyDetails.source || '—'}</div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Website</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                    {selectedCompanyDetails.website ? (
+                      <a href={selectedCompanyDetails.website.startsWith('http') ? selectedCompanyDetails.website : `https://${selectedCompanyDetails.website}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>
+                        {selectedCompanyDetails.website}
+                      </a>
+                    ) : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Width Fields */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Address</label>
+                  <div style={{ fontSize: '14px', lineHeight: '1.5' }}>{selectedCompanyDetails.address || '—'}</div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Current Assigned Owner</label>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--primary)' }}>
+                    {selectedCompanyDetails.Owner?.full_name || '—'} ({selectedCompanyDetails.Owner?.email || '—'})
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setSelectedCompanyDetails(null)}
+                style={{
+                  padding: '10px 24px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-input)',
+                  color: 'var(--text-main)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

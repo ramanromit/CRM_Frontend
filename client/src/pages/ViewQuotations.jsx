@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
 import { useAuth } from '../context/AuthContext';
+import { QuotationIcon, FileIcon } from '../components/Icons';
 import './Auth.css';
 
 const ViewQuotations = () => {
@@ -36,6 +37,7 @@ const ViewQuotations = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch quotations');
     } finally {
+      setError('');
       setLoading(false);
     }
   };
@@ -166,8 +168,8 @@ const ViewQuotations = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '36px', marginBottom: '12px', animation: 'pulse 1.5s infinite' }}>📋</div>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <QuotationIcon size={36} style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite', color: 'var(--primary)' }} />
           <p>Loading quotations...</p>
         </div>
       </div>
@@ -254,8 +256,8 @@ const ViewQuotations = () => {
 
       {/* Table */}
       {filteredQuotations.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>📄</div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <FileIcon size={48} style={{ marginBottom: '12px', opacity: 0.5 }} />
           <p style={{ fontSize: '16px', fontWeight: 500 }}>No quotations found</p>
           <p style={{ fontSize: '13px' }}>Quotation requests will appear here.</p>
         </div>
@@ -278,7 +280,7 @@ const ViewQuotations = () => {
               <tbody>
                 {filteredQuotations.map((q) => (
                   <tr key={q.id} style={{ transition: 'background 0.15s' }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <td style={{ ...cellStyle, fontWeight: 600, color: '#667eea' }}>

@@ -85,10 +85,12 @@ const StaffDashboard = () => {
 
       {/* KPI Cards */}
       <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-title">My Leads / Companies</div>
-          <div className="kpi-value">{summary?.total_leads ?? '—'}</div>
-        </div>
+        {user?.role !== 'marketing' && (
+          <div className="kpi-card">
+            <div className="kpi-title">My Leads / Companies</div>
+            <div className="kpi-value">{summary?.total_leads ?? '—'}</div>
+          </div>
+        )}
         <div className="kpi-card">
           <div className="kpi-title">My Customers</div>
           <div className="kpi-value">{summary?.total_customers ?? '—'}</div>
@@ -100,6 +102,14 @@ const StaffDashboard = () => {
         <div className="kpi-card">
           <div className="kpi-title">My Orders</div>
           <div className="kpi-value">{summary?.total_orders ?? '—'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">My Assigned Tasks</div>
+          <div className="kpi-value">{summary?.total_tasks ?? '—'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-title">My Completed Tasks</div>
+          <div className="kpi-value" style={{ color: '#10b981' }}>{summary?.completed_tasks ?? '—'}</div>
         </div>
       </div>
 

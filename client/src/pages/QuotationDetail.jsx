@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../api';
 import { useAuth } from '../context/AuthContext';
+import { QuotationIcon } from '../components/Icons';
 import './Auth.css';
 
 const QuotationDetail = () => {
@@ -92,8 +93,8 @@ const QuotationDetail = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '36px', marginBottom: '12px', animation: 'pulse 1.5s infinite' }}>📋</div>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <QuotationIcon size={36} style={{ marginBottom: '12px', animation: 'pulse 1.5s infinite', color: 'var(--primary)' }} />
           <p>Loading quotation details...</p>
         </div>
       </div>

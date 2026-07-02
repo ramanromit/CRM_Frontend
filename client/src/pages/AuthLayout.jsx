@@ -8,11 +8,8 @@ const AuthLayout = ({ children }) => {
         <div className="auth-image-panel">
           <div className="auth-image-content">
             <div className="auth-header">
-                <div className="auth-logo">
-                    {/* SVG placeholder for AMU logo */}
-                    <svg width="60" height="20" viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5 20L15 0H25L35 20H28L20 4L12 20H5ZM40 20V0H48V16H58V20H40Z" fill="white"/>
-                    </svg>
+                <div className="auth-logo" style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/favicon.svg" alt="SeminaAgro Logo" style={{ height: '50px', width: 'auto', display: 'block' }} />
                 </div>
                 <button className="back-btn">Back to website &rarr;</button>
             </div>

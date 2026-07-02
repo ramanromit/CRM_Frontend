@@ -1,6 +1,18 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  SproutIcon, 
+  DashboardIcon, 
+  CalendarIcon, 
+  ClipboardIcon,
+  QuotationIcon, 
+  UsersIcon, 
+  PackageIcon, 
+  BuildingIcon, 
+  UserIcon, 
+  LogOutIcon 
+} from './Icons';
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -14,17 +26,18 @@ const Sidebar = () => {
   const role = user?.role || 'user';
 
   const allNavLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: '⊞', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts', 'user'] },
-    { name: 'Activities', path: '/activities', icon: '📅', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
-    { name: 'Quotations', path: '/quotations', icon: '📋', roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
-    { name: 'Customers', path: '/customers', icon: '👥', roles: ['developer', 'owner', 'manager', 'sales', 'accounts'] },
-    { name: 'Orders', path: '/orders', icon: '📦', roles: ['developer', 'owner', 'manager', 'sales'] },
-    { name: 'Companies', path: '/clients', icon: '🏢', roles: ['developer', 'owner', 'manager', 'sales', 'marketing'] },
-    { name: 'Employees', path: '/employees', icon: '👤', roles: ['developer', 'owner', 'manager'] },
+    { name: 'Dashboard', path: '/dashboard', icon: <DashboardIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts', 'user'] },
+    { name: 'Activities', path: '/activities', icon: <CalendarIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
+    { name: 'Assignments', path: '/assignments', icon: <ClipboardIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'marketing'] },
+    { name: 'Quotations', path: '/quotations', icon: <QuotationIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'accounts'] },
+    { name: 'Customers', path: '/customers', icon: <UsersIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'marketing', 'accounts'] },
+    { name: 'Orders', path: '/orders', icon: <PackageIcon />, roles: ['developer', 'owner', 'manager', 'sales', 'marketing'] },
+    { name: 'Companies', path: '/clients', icon: <BuildingIcon />, roles: ['developer', 'owner', 'manager', 'sales'] },
+    { name: 'Employees', path: '/employees', icon: <UserIcon />, roles: ['developer', 'owner'] },
   ];
 
   const navLinks = allNavLinks.filter(link => link.roles.includes(role));
-  const showAddLead = ['developer', 'owner', 'manager', 'sales', 'marketing'].includes(role);
+  const showAddLead = ['developer', 'owner', 'manager', 'sales'].includes(role);
 
   return (
     <div style={{
@@ -49,10 +62,9 @@ const Sidebar = () => {
             borderRadius: '6px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px'
+            justifyContent: 'center'
           }}>
-            🌱
+            <SproutIcon size={18} />
           </div>
           <div>
             <h2 style={{ margin: 0, fontSize: '20px', letterSpacing: '-0.5px', color: 'var(--primary)' }}>AgriCRM</h2>
@@ -150,7 +162,7 @@ const Sidebar = () => {
                 e.currentTarget.style.color = 'var(--text-muted)';
               }}
             >
-              <span style={{ fontSize: '16px' }}>➜</span> Sign Out
+              <LogOutIcon size={16} /> Sign Out
             </button>
           </li>
         </ul>
