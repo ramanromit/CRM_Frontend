@@ -26,6 +26,39 @@ const Layout = ({ children }) => {
   const notifRef = useRef(null);
   const navigate = useNavigate();
 
+  // --- Dismissed notifications helpers (localStorage-based) ---
+  const getDismissedKey = () => `crm_dismissed_notifs_${user?.id || 'unknown'}`;
+
+  const getDismissedIds = () => {
+    try {
+      const raw = localStorage.getItem(getDismissedKey());
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      // Auto-expire dismissed list after 24 hours
+      if (parsed.expiry && Date.now() > parsed.expiry) {
+        localStorage.removeItem(getDismissedKey());
+        return [];
+      }
+      return parsed.ids || [];
+    } catch { return []; }
+  };
+
+  const saveDismissedIds = (ids) => {
+    localStorage.setItem(getDismissedKey(), JSON.stringify({
+      ids,
+      expiry: Date.now() + 24 * 60 * 60 * 1000 // expires in 24h
+    }));
+  };
+
+  const dismissAllNotifications = () => {
+    const currentIds = notifications.map(n => String(n.id));
+    const existing = getDismissedIds();
+    const merged = [...new Set([...existing, ...currentIds])];
+    saveDismissedIds(merged);
+    setNotifications([]);
+  };
+  // --- End dismissed helpers ---
+
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -189,7 +222,7 @@ const Layout = ({ children }) => {
                   <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h4 style={{ margin: 0, fontWeight: 600, fontSize: '14px', color: 'var(--text-main)' }}>Notifications ({notifications.length})</h4>
                     <span 
-                      onClick={(e) => { e.stopPropagation(); setNotifications([]); }}
+                      onClick={(e) => { e.stopPropagation(); dismissAllNotifications(); }}
                       style={{ fontSize: '12px', color: 'var(--primary)', cursor: 'pointer' }}
                     >
                       Clear all
