@@ -1,4 +1,4 @@
-# SeminaAgro CRM
+# Customer Realtional Manager
 
 A production-ready CRM system built with a React frontend and Node.js/Express backend, using PostgreSQL with Sequelize ORM.
 
